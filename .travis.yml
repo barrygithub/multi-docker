@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t barryltang/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true barryltang/react-test npm test
+
+after_success:
+  - docker build -t barryltang/multi-client ./client
+  - docker build -t barryltang/multi-nginx ./nginx
+  - docker build -t barryltang/multi-server ./server
+  - docker build -t barryltang/multi-worker ./worker
+
+  #Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #Take those images and push then to docker hub
+  - docker push barryltang/multi-client
+  - docker push barryltang/multi-nginx
+  - docker push barryltang/multi-server
+  - docker push barryltang/multi-worker
